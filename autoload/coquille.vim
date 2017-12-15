@@ -38,6 +38,13 @@ function! coquille#ShowPanels()
         setlocal filetype=coq-infos
         setlocal noswapfile
         let s:info_buf = bufnr("%")
+    if exists("s:debug")
+        rightbelow new Debug
+            setlocal buftype=nofile
+            setlocal filetype=coq-debug
+            setlocal noswapfile
+            let s:debug_buf = bufnr("%")
+    endif
     execute l:winnb . 'winc w'
 endfunction
 
@@ -86,8 +93,14 @@ function! coquille#Launch(...)
     if s:coq_running == 1
         echo "Coq is already running"
     else
-        let s:coq_running = 1
+        call coquille#ShowPanels()
+        if exists("s:debug_buf")
+            py coquille.set_debug(vim.buffers[int(vim.eval("s:debug_buf"))])
+        else
+            py coquille.set_debug(None)
+        endif
 
+        let s:coq_running = 1
         " initialize the plugin (launch coqtop)
         py coquille.launch_coq(*vim.eval("map(copy(a:000),'expand(v:val)')"))
 
@@ -100,8 +113,6 @@ function! coquille#Launch(...)
 
         command! -buffer -nargs=* Coq call coquille#RawQuery(<f-args>)
 
-        call coquille#ShowPanels()
-
         " Automatically sync the buffer when entering insert mode: this is usefull
         " when we edit the portion of the buffer which has already been sent to coq,
         " we can then rewind to the appropriate point.
@@ -111,6 +122,10 @@ function! coquille#Launch(...)
         " time you explicitly call a command (be it 'rewind' or 'interp')
         au InsertEnter <buffer> py coquille.sync()
     endif
+endfunction
+
+function! coquille#DebugOn()
+    let s:debug = 1
 endfunction
 
 function! coquille#Register()

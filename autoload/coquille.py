@@ -9,6 +9,35 @@ from collections import deque
 import vimbufsync
 vimbufsync.check_version("0.1.0", who="coquille")
 
+class Logger:
+    def __init__(self, buf):
+        self.vim_win = None
+        for win in vim.windows:
+            if win.buffer == buf:
+                self.vim_win = win
+                break
+        if self.vim_win:
+            self.vim_win.buffer[:] = None
+            self.vim_win.buffer[0] = "START DEBUGGING"
+    def log(self, message):
+        if self.vim_win is not None:
+            for l in message.split('\n'):
+                self.vim_win.buffer.append(l)
+            self.vim_win.cursor = (len(self.vim_win.buffer), 0)
+            ori_win = vim.current.window.number
+            cmd = "execute %d . 'winc w'\n\
+                   execute %d . 'winc w'" % (self.vim_win.number, ori_win)
+            vim.command(cmd)
+
+logger = Logger(None)
+
+def set_debug(buf):
+    global logger
+    if buf:
+        logger = Logger(buf)
+    else:
+        logger = Logger(None)
+
 #: See vimbufsync ( https://github.com/def-lkb/vimbufsync )
 saved_sync = None
 
@@ -163,6 +192,8 @@ def coq_raw_query(*args):
 
 
 def launch_coq(*args):
+    global logger
+    CT.set_debug(logger)
     CT.restart_coq(*args)
 
 def debug():

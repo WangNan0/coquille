@@ -24,6 +24,20 @@ Goals = namedtuple('Goals', ['fg', 'bg', 'shelved', 'given_up'])
 Goal = namedtuple('Goal', ['id', 'hyp', 'ccl'])
 Evar = namedtuple('Evar', ['info'])
 
+class Emptylogger:
+    def log(self, message):
+        pass
+
+logger = Emptylogger()
+
+def set_debug(l):
+    global logger
+    logger = l
+
+def info(message):
+    global logger
+    logger.log(message)
+
 def parse_response(xml):
     assert xml.tag == 'value'
     if xml.get('val') == 'good':
@@ -162,9 +176,11 @@ def escape(cmd):
 def get_answer():
     fd = coqtop.stdout.fileno()
     data = ''
+    info("RESPONSE:")
     while True:
         try:
             data += os.read(fd, 0x4000)
+            info(data)
             try:
                 elt = ET.fromstring('<coqtoproot>' + escape(data) + '</coqtoproot>')
                 shouldWait = True
@@ -201,6 +217,8 @@ def call(name, arg, encoding='utf-8'):
     return response
 
 def send_cmd(cmd):
+    info("SEND CMD:")
+    info(cmd)
     coqtop.stdin.write(cmd)
 
 def restart_coq(*args):
