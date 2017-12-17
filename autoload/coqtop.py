@@ -173,6 +173,14 @@ def escape(cmd):
               .replace("&#40;", '(') \
               .replace("&#41;", ')')
 
+# Extract <string> from a <message> element
+def parse_message(elt):
+    for e in elt:
+        if e.tag == 'string':
+            return parse_value(e)
+    # message without string?
+    return ''
+
 def get_answer():
     fd = coqtop.stdout.fileno()
     data = ''
@@ -192,9 +200,9 @@ def get_answer():
                         valueNode = c
                     if c.tag == 'message':
                         if messageNode is not None:
-                            messageNode = messageNode + "\n\n" + parse_value(c[2])
+                            messageNode = messageNode + "\n\n" + parse_message(c)
                         else:
-                            messageNode = parse_value(c[2])
+                            messageNode = parse_message(c)
                 if shouldWait:
                     continue
                 else:
