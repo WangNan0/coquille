@@ -229,6 +229,12 @@ def show_goal():
         print('ERROR: the Coq process died')
         return
 
+    if isinstance(response, CT.Err):
+        text = response.err.text
+        for l in text.split('\n'):
+            buff.append(l)
+        return
+
     if response.msg is not None:
         info_msg = response.msg
 
